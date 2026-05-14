@@ -1,0 +1,9 @@
+<resources>
+
+    <string name="app_name">testapp</string>
+
+    <string name="accessibility_description">
+        Serviço para monitorar apps e promover pausas conscientes.
+    </string>
+
+</resources>
