@@ -1,16 +1,28 @@
-# testapp
+**MindSec** é um aplicativo de bem-estar digital projetado para interromper o ciclo de uso automático e impulsivo de dispositivos móveis. Em vez de apenas bloquear o acesso, o app utiliza o conceito de **fricção positiva**, forçando uma pausa consciente e uma sessão de respiração guiada antes de permitir a abertura de aplicativos "gatilho" (redes sociais).
 
-A new Flutter project.
+## 🚀 O Projeto
+Este é um **Projeto Integrador** desenvolvido com **Dart & Flutter**, utilizando **Firebase** como backend. O foco principal é o impacto na saúde mental e a retomada do controle do tempo no dia a dia de adolescentes e adultos.
 
-## Getting Started
+## ✨ Funcionalidades
+- **Intervenção em Tempo Real:** Detecta a abertura de apps configurados e sobrepõe uma tela de pausa.
+- **Respiração Guiada:** Animações fluidas que guiam o usuário em um ciclo de respiração profunda de 15 segundos.
+- **Check-in de Intenção:** Questionário rápido para validar se o uso do app é necessário ou apenas hábito.
+- **Dashboard de Foco:** Visualização do "tempo de vida recuperado" e estatísticas de uso consciente.
+- **Premium Dark UI:** Interface minimalista focada em redução de fadiga visual.
 
-This project is a starting point for a Flutter application.
+## 🛠️ Tech Stack
+- **Frontend:** [Flutter](https://flutter.dev/)
+- **Linguagem:** [Dart](https://dart.dev/)
+- **Backend:** [Firebase](https://firebase.google.com/) (Auth & Firestore)
+- **Animações:** Lottie / Flutter Custom Painter
 
-A few resources to get you started if this is your first Flutter project:
+## 📋 Pré-requisitos
+Antes de começar, você precisará ter instalado em sua máquina:
+- SDK do Flutter
+- Um emulador Android ou dispositivo físico
+- Configuração do `firebase_options.dart` (não incluso no repositório por segurança)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🏗️ Como rodar o projeto
+1. Clone o repositório:
+   ```bash
+   git clone [https://github.com/p3uziNn/mindpause.git](https://github.com/p3uziNn/mindsec.git)
