@@ -18,11 +18,30 @@ class _InterruptionScreenState
 
   int seconds = 10;
 
+  final List<String> messages = [
+
+    "Seu foco vale mais que o impulso.",
+
+    "Respire antes de decidir.",
+
+    "Você está no controle.",
+
+    "Só alguns segundos de consciência.",
+
+    "O automático não precisa decidir por você.",
+  ];
+
+  late String currentMessage;
+
   @override
   void initState() {
     super.initState();
 
-    // animação respirando
+    currentMessage = messages[
+      DateTime.now().millisecond %
+          messages.length
+    ];
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -30,7 +49,7 @@ class _InterruptionScreenState
 
     _animation = Tween<double>(
       begin: 180,
-      end: 240,
+      end: 250,
     ).animate(
       CurvedAnimation(
         parent: _controller,
@@ -69,27 +88,43 @@ class _InterruptionScreenState
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: const Color(0xFF050505),
 
       body: SafeArea(
-        child: Center(
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 28),
+
           child: Column(
             mainAxisAlignment:
                 MainAxisAlignment.center,
 
             children: [
 
+              const Spacer(),
+
               const Text(
                 "Respire.",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 38,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
                 ),
               ),
 
-              const SizedBox(height: 50),
+              const SizedBox(height: 16),
+
+              const Text(
+                "Uma pequena pausa antes de continuar.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 15,
+                ),
+              ),
+
+              const SizedBox(height: 70),
 
               AnimatedBuilder(
                 animation: _animation,
@@ -102,15 +137,36 @@ class _InterruptionScreenState
 
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.08),
+
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.greenAccent
+                              .withOpacity(0.25),
+
+                          Colors.greenAccent
+                              .withOpacity(0.02),
+                        ],
+                      ),
+
+                      boxShadow: [
+
+                        BoxShadow(
+                          color: Colors.greenAccent
+                              .withOpacity(0.15),
+
+                          blurRadius: 60,
+                          spreadRadius: 10,
+                        ),
+                      ],
                     ),
 
                     child: Center(
                       child: Text(
                         "$seconds",
+
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 52,
+                          fontSize: 64,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -119,70 +175,124 @@ class _InterruptionScreenState
                 },
               ),
 
-              const SizedBox(height: 50),
+              const SizedBox(height: 70),
 
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32),
+              AnimatedSwitcher(
+                duration:
+                    const Duration(milliseconds: 400),
 
                 child: Text(
                   seconds > 0
-                      ? "Seu foco vale mais que o impulso."
+                      ? currentMessage
                       : "Você ainda quer abrir esse app?",
+
+                  key: ValueKey(seconds),
 
                   textAlign: TextAlign.center,
 
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 18,
-                    height: 1.5,
+                    height: 1.6,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
 
               const SizedBox(height: 60),
 
-              if (seconds == 0)
-                Column(
-                  children: [
+              AnimatedOpacity(
+                opacity: seconds == 0 ? 1 : 0,
+                duration:
+                    const Duration(milliseconds: 500),
 
-                    ElevatedButton(
+                child: seconds == 0
+                    ? Column(
+                        children: [
 
-                      style: ElevatedButton.styleFrom(
-                        minimumSize:
-                            const Size(260, 55),
-                      ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
 
-                      onPressed: () {
+                            child: ElevatedButton(
 
-                        // liberar acesso depois
-                      },
+                              style:
+                                  ElevatedButton.styleFrom(
 
-                      child: const Text(
-                        "Entrar mesmo assim",
-                      ),
-                    ),
+                                backgroundColor:
+                                    Colors.greenAccent,
 
-                    const SizedBox(height: 16),
+                                foregroundColor:
+                                    Colors.black,
 
-                    OutlinedButton(
+                                shape:
+                                    RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(18),
+                                ),
+                              ),
 
-                      style: OutlinedButton.styleFrom(
-                        minimumSize:
-                            const Size(260, 55),
-                      ),
+                              onPressed: () {
 
-                      onPressed: () {
+                                // liberar app
+                              },
 
-                        Navigator.pop(context);
-                      },
+                              child: const Text(
+                                "Entrar mesmo assim",
 
-                      child: const Text(
-                        "Voltar",
-                      ),
-                    ),
-                  ],
-                ),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight:
+                                      FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+
+                            child: OutlinedButton(
+
+                              style:
+                                  OutlinedButton.styleFrom(
+
+                                side: BorderSide(
+                                  color: Colors.white
+                                      .withOpacity(0.15),
+                                ),
+
+                                shape:
+                                    RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(18),
+                                ),
+                              ),
+
+                              onPressed: () {
+
+                                Navigator.pop(context);
+                              },
+
+                              child: const Text(
+                                "Voltar",
+
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : const SizedBox(height: 128),
+              ),
+
+              const Spacer(),
             ],
           ),
         ),
