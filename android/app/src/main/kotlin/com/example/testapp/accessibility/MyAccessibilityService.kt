@@ -7,31 +7,63 @@ import com.example.testapp.MainActivity
 
 class MyAccessibilityService : AccessibilityService() {
 
-    private val blockedApps = listOf(
-        "com.instagram.android",
-        "com.zhiliaoapp.musically",
-        "com.twitter.android",
-        "com.google.android.youtube"
-    )
+    private fun getSelectedApps(): Set<String> {
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        val prefs = getSharedPreferences(
+            "FlutterSharedPreferences",
+            MODE_PRIVATE
+        )
+
+        val jsonString = prefs.getString(
+            "flutter.selected_monitored_apps",
+            ""
+        ) ?: ""
+
+        val cleaned = jsonString
+        .replace("\"", "")
+        .removePrefix("[")
+        .removeSuffix("]")
+
+        return cleaned
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+    }
+
+    override fun onAccessibilityEvent(
+        event: AccessibilityEvent?
+    ) {
 
         if (event == null) return
 
-        if (event.eventType ==
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+        if (
+            event.eventType ==
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        ) {
 
             val packageName =
-                event.packageName?.toString() ?: return
+                event.packageName?.toString()
+                    ?: return
 
-            if (blockedApps.contains(packageName)) {
+            if (
+                getSelectedApps()
+                    .contains(packageName)
+            ) {
 
-                val intent =
-                    Intent(this, MainActivity::class.java)
+                val intent = Intent(
+                    this,
+                    MainActivity::class.java
+                )
 
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                intent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                )
 
-                intent.putExtra("blocked_app", packageName)
+                intent.putExtra(
+                    "blocked_app",
+                    packageName
+                )
 
                 startActivity(intent)
             }
