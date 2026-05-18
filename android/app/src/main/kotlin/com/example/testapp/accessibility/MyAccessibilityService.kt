@@ -2,10 +2,15 @@ package com.example.testapp.accessibility
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import com.example.testapp.MainActivity
 
 class MyAccessibilityService : AccessibilityService() {
+
+    private var lastOpenedPackage = ""
+
+    private var lastInterventionTime = 0L
 
     private fun getSelectedApps(): Set<String> {
 
@@ -20,9 +25,9 @@ class MyAccessibilityService : AccessibilityService() {
         ) ?: ""
 
         val cleaned = jsonString
-        .replace("\"", "")
-        .removePrefix("[")
-        .removeSuffix("]")
+            .replace("\"", "")
+            .removePrefix("[")
+            .removeSuffix("]")
 
         return cleaned
             .split(",")
@@ -38,35 +43,51 @@ class MyAccessibilityService : AccessibilityService() {
         if (event == null) return
 
         if (
-            event.eventType ==
+            event.eventType !=
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        ) return
+
+        val packageName =
+            event.packageName?.toString()
+                ?: return
+
+        // evita loop infinito
+        val currentTime =
+            SystemClock.elapsedRealtime()
+
+        if (
+            packageName == lastOpenedPackage &&
+            currentTime - lastInterventionTime < 4000
+        ) {
+            return
+        }
+
+        if (
+            getSelectedApps()
+                .contains(packageName)
         ) {
 
-            val packageName =
-                event.packageName?.toString()
-                    ?: return
+            lastOpenedPackage =
+                packageName
 
-            if (
-                getSelectedApps()
-                    .contains(packageName)
-            ) {
+            lastInterventionTime =
+                currentTime
 
-                val intent = Intent(
-                    this,
-                    MainActivity::class.java
-                )
+            val intent = Intent(
+                this,
+                MainActivity::class.java
+            )
 
-                intent.addFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK
-                )
+            intent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK
+            )
 
-                intent.putExtra(
-                    "blocked_app",
-                    packageName
-                )
+            intent.putExtra(
+                "blocked_app",
+                packageName
+            )
 
-                startActivity(intent)
-            }
+            startActivity(intent)
         }
     }
 

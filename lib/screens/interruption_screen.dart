@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class InterruptionScreen extends StatefulWidget {
 
@@ -19,7 +20,14 @@ class InterruptionScreen extends StatefulWidget {
 class _InterruptionScreenState
     extends State<InterruptionScreen> {
 
+  static const MethodChannel platform =
+      MethodChannel(
+        "mindpause/intervention",
+      );
+
   int seconds = 10;
+
+  Timer? timer;
 
   @override
   void initState() {
@@ -30,13 +38,20 @@ class _InterruptionScreenState
 
   void startTimer() {
 
-    Timer.periodic(
+    timer = Timer.periodic(
       const Duration(seconds: 1),
       (timer) {
 
-        if (seconds == 0) {
+        if (seconds <= 1) {
+
           timer.cancel();
+
+          setState(() {
+            seconds = 0;
+          });
+
         } else {
+
           setState(() {
             seconds--;
           });
@@ -46,118 +61,208 @@ class _InterruptionScreenState
   }
 
   @override
+  void dispose() {
+
+    timer?.cancel();
+
+    super.dispose();
+  }
+
+  Future<void> continueAnyway() async {
+
+    try {
+
+      await platform.invokeMethod(
+        "openBlockedApp",
+        {
+          "packageName":
+              widget.packageName,
+        },
+      );
+
+    } catch (e) {
+
+      debugPrint(
+        "Erro ao abrir app: $e",
+      );
+    }
+  }
+
+  Future<void> closeApp() async {
+
+    try {
+
+      await platform.invokeMethod(
+        "goHome",
+      );
+
+    } catch (e) {
+
+      debugPrint(
+        "Erro ao voltar home: $e",
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: const Color(
+        0xFF050505,
+      ),
 
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: Center(
 
-          child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+          child: Padding(
+            padding: const EdgeInsets.all(
+              24,
+            ),
 
-            children: [
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
 
-              const Spacer(),
+              children: [
 
-              Container(
-                width: 180,
-                height: 180,
+                AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: 400,
+                  ),
 
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.greenAccent,
-                    width: 4,
+                  width: 190,
+                  height: 190,
+
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+
+                    border: Border.all(
+                      color: Colors.greenAccent,
+                      width: 5,
+                    ),
+                  ),
+
+                  child: Center(
+                    child: Text(
+                      "$seconds",
+
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 68,
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
 
-                child: Center(
-                  child: Text(
-                    "$seconds",
+                const SizedBox(
+                  height: 40,
+                ),
 
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 64,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
+                const Text(
+                  "Respire fundo",
+
+                  textAlign: TextAlign.center,
+
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 40),
-
-              const Text(
-                "Respire fundo",
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(
+                  height: 14,
                 ),
-              ),
 
-              const SizedBox(height: 12),
+                Text(
+                  "Você abriu ${widget.packageName}",
 
-              Text(
-                "Você abriu ${widget.packageName}",
+                  textAlign: TextAlign.center,
 
-                textAlign: TextAlign.center,
-
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 16,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
 
-              const Spacer(),
+                const SizedBox(
+                  height: 50,
+                ),
 
-              if (seconds == 0)
-                Column(
-                  children: [
+                if (seconds == 0)
+                  Column(
+                    children: [
 
-                    SizedBox(
-                      width: double.infinity,
+                      SizedBox(
+                        width: double.infinity,
 
-                      child: ElevatedButton(
-                        onPressed: () {
+                        child: ElevatedButton(
 
-                          Navigator.pop(
-                            context,
-                          );
-                        },
+                          style:
+                              ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.greenAccent,
 
-                        child: const Text(
-                          "Continuar mesmo assim",
+                            foregroundColor:
+                                Colors.black,
+
+                            padding:
+                                const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+                          ),
+
+                          onPressed:
+                              continueAnyway,
+
+                          child: const Text(
+                            "Continuar mesmo assim",
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 14),
+                      const SizedBox(
+                        height: 16,
+                      ),
 
-                    SizedBox(
-                      width: double.infinity,
+                      SizedBox(
+                        width: double.infinity,
 
-                      child: OutlinedButton(
-                        onPressed: () {
+                        child: OutlinedButton(
 
-                          Navigator.pop(
-                            context,
-                          );
-                        },
+                          style:
+                              OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color:
+                                  Colors.white24,
+                            ),
 
-                        child: const Text(
-                          "Fechar app",
+                            padding:
+                                const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+                          ),
+
+                          onPressed:
+                              closeApp,
+
+                          child: const Text(
+                            "Fechar app",
+                            style: TextStyle(
+                              color:
+                                  Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-            ],
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ),
