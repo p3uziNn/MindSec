@@ -26,8 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // 1. Busca os apps instalados
     List<AppInfo> apps = await InstalledApps.getInstalledApps(true, true);
 
-    // CORREÇÃO: Busca os apps que já foram salvos anteriormente para persistir o estado na tela
-    // Nota: Ajuste o nome do método abaixo se no seu service ele for diferente (ex: getSavedApps, etc)
+    // Busca os apps que já foram salvos anteriormente para persistir o estado na tela
     try {
       List<String> savedApps = await AppSelectionService.getSelectedApps();
       selectedApps.addAll(savedApps);
@@ -119,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // BOTÃO DE ATIVAÇÃO
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48), // Deixa o botão largo e elegante
+                      minimumSize: const Size(double.infinity, 48),
                       backgroundColor: Colors.greenAccent,
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -130,7 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const Text("Ativar Monitoramento", style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   
-                  // CORREÇÃO: Espaçamento adicionado para o botão não ficar colado nos cards abaixo
                   const SizedBox(height: 16),
 
                   // CARDS DE ESTATÍSTICAS
@@ -183,21 +181,26 @@ class _HomeScreenState extends State<HomeScreen> {
                               itemCount: installedApps.length,
                               itemBuilder: (context, index) {
                                 final app = installedApps[index];
-                                final bool isSelected = selectedApps.contains(app.packageName ?? "");
+                                final String pkgName = app.packageName ?? "";
+                                final bool isSelected = selectedApps.contains(pkgName);
 
                                 return GestureDetector(
-                                  onTap: () async {
+                                  // CORREÇÃO AQUI: O clique agora é instantâneo e salva em background de forma assíncrona segura
+                                  onTap: () {
+                                    if (pkgName.isEmpty) return;
+
                                     setState(() {
                                       if (isSelected) {
-                                        selectedApps.remove(app.packageName ?? "");
+                                        selectedApps.remove(pkgName);
                                       } else {
-                                        selectedApps.add(app.packageName ?? "");
+                                        selectedApps.add(pkgName);
                                       }
                                     });
 
-                                    await AppSelectionService.saveSelectedApps(
-                                      selectedApps.toList(),
-                                    );
+                                    // Salva no SharedPreferences sem travar a renderização do check na tela
+                                    AppSelectionService.saveSelectedApps(selectedApps.toList()).catchError((e) {
+                                      debugPrint("Erro ao salvar lista de apps: $e");
+                                    });
                                   },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
@@ -239,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 ),
                                               ),
                                               Text(
-                                                app.packageName ?? "",
+                                                pkgName,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: const TextStyle(color: Colors.white38, fontSize: 12),

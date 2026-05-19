@@ -1,100 +1,59 @@
 package com.example.testapp
 
 import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
 
-    private val CHANNEL =
-        "mindpause/intervention"
+    private val CHANNEL = "mindpause/intervention"
+    private var latestBlockedApp: String? = null
 
-    override fun configureFlutterEngine(
-        flutterEngine: FlutterEngine
-    ) {
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
 
-        super.configureFlutterEngine(
-            flutterEngine
-        )
-
-        MethodChannel(
-            flutterEngine.dartExecutor.binaryMessenger,
-            CHANNEL
-        ).setMethodCallHandler {
-
-            call,
-            result ->
-
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
-
                 "getBlockedApp" -> {
-
-                    val blockedApp =
-                        intent.getStringExtra(
-                            "blocked_app"
-                        )
-
-                    result.success(
-                        blockedApp
-                    )
+                    result.success(latestBlockedApp)
+                    latestBlockedApp = null
                 }
 
                 "openBlockedApp" -> {
-
-                    val packageName =
-                        call.argument<String>(
-                            "packageName"
-                        )
-
+                    val packageName = call.argument<String>("packageName")
                     if (packageName != null) {
-
-                        val launchIntent =
-                            packageManager
-                                .getLaunchIntentForPackage(
-                                    packageName
-                                )
-
+                        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
                         if (launchIntent != null) {
+                            latestBlockedApp = null
+                            
+                            // Limpa extras antigos para evitar recarregamento fantasma
+                            intent.removeExtra("blocked_app") 
 
-                            launchIntent.addFlags(
-                                Intent.FLAG_ACTIVITY_NEW_TASK
-                            )
+                            // CORREÇÃO: Avisa o serviço de acessibilidade para liberar este pacote ANTES de abrir o app
+                            com.example.testapp.accessibility.MyAccessibilityService.bypassApp(packageName)
 
-                            startActivity(
-                                launchIntent
-                            )
-
+                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            startActivity(launchIntent)
+                            
+                            // Minimiza o MindPause após abrir o app de destino
+                            moveTaskToBack(true) 
+                            
                             result.success(true)
-
                         } else {
-
                             result.success(false)
                         }
-
                     } else {
-
                         result.success(false)
                     }
                 }
 
                 "goHome" -> {
-
-                    val homeIntent = Intent(
-                        Intent.ACTION_MAIN
-                    )
-
-                    homeIntent.addCategory(
-                        Intent.CATEGORY_HOME
-                    )
-
-                    homeIntent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK
-
+                    val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                        addCategory(Intent.CATEGORY_HOME)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
                     startActivity(homeIntent)
-
                     result.success(true)
                 }
 
@@ -102,6 +61,21 @@ class MainActivity : FlutterActivity() {
                     result.notImplemented()
                 }
             }
+        }
+
+        latestBlockedApp = intent.getStringExtra("blocked_app")
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+
+        val app = intent.getStringExtra("blocked_app")
+        latestBlockedApp = app
+
+        // ESSENCIAL: Notifica o Flutter instantaneamente se o app já estiver aberto em segundo plano
+        flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+            MethodChannel(messenger, CHANNEL).invokeMethod("newBlockedApp", app)
         }
     }
 }
